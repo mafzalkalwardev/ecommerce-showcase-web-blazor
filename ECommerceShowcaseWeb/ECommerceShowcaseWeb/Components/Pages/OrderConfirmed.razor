@@ -1,0 +1,122 @@
+﻿@page "/order-confirmed"
+@rendermode InteractiveAuto
+@using ECommerceShowcaseWeb.Models
+@using ECommerceShowcaseWeb.Services
+@inject ProductService ProductService
+@inject OrderService OrderService
+@inject CustomerService CustomerService
+@inject NavigationManager Navigation
+
+<PageTitle>Order Confirmed</PageTitle>
+
+<NavMenu />
+
+<div class="container mt-5">
+    <div class="text-center">
+        <div class="mb-4">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="45" stroke="#28a745" stroke-width="5" fill="none"/>
+                <path d="M30 50 L45 65 L70 35" stroke="#28a745" stroke-width="5" fill="none"/>
+            </svg>
+        </div>
+        <h2 class="text-success">Thank You for Your Order!</h2>
+        <p class="lead">Your order has been placed successfully.</p>
+        
+        @if (order != null)
+        {
+            <div class="card mt-4 text-start">
+                <div class="card-header bg-success text-white">
+                    <h5>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Order ID:</strong> @order.Id</p>
+                    <p><strong>Customer ID:</strong> @order.Customer?.Id</p>
+                    <p><strong>Name:</strong> @order.Customer?.Name</p>
+                    <p><strong>Email:</strong> @order.Customer?.Email</p>
+                    <p><strong>Address:</strong> @order.Customer?.Address</p>
+                    <p><strong>Contact:</strong> @order.Customer?.ContactNumber</p>
+                    
+                    <hr />
+                    
+                    <h6>Items:</h6>
+                    @foreach (var item in order.Items)
+                    {
+                        <div class="d-flex justify-content-between">
+                            <span>@item.ProductName</span>
+                            <span>$@item.Price</span>
+                        </div>
+                    }
+                    
+                    <hr />
+                    
+                    <div class="d-flex justify-content-between">
+                        <strong>Total:</strong>
+                        <strong class="text-success">$@order.TotalPrice</strong>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <a href="/" class="btn btn-primary btn-lg mt-4">Continue Shopping</a>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int ProductId { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string Name { get; set; } = "";
+    
+    [SupplyParameterFromQuery]
+    public string Email { get; set; } = "";
+    
+    [SupplyParameterFromQuery]
+    public string Address { get; set; } = "";
+    
+    [SupplyParameterFromQuery]
+    public string Contact { get; set; } = "";
+
+    [SupplyParameterFromQuery]
+    public int Quantity { get; set; } = 1;
+
+    private Order? order = null;
+
+    protected override void OnInitialized()
+    {
+        var product = ProductService.GetProductById(ProductId);
+        
+        if (product != null)
+        {
+            var customer = new Customer
+            {
+                Name = Name,
+                Email = Email,
+                Address = Address,
+                ContactNumber = Contact
+            };
+            
+            var customerId = CustomerService.SaveCustomer(customer);
+            customer = CustomerService.GetCustomerById(customerId);
+            
+            order = new Order
+            {
+                Customer = customer,
+                CustomerId = customerId,
+                TotalPrice = product.Price * Quantity,
+                Items = new List<OrderItem>
+                {
+                    new OrderItem
+                    {
+                        ProductId = product.Id,
+                        ProductName = product.Name,
+                        Quantity = Quantity,
+                        Price = product.Price * Quantity
+                    }
+                }
+            };
+            
+            OrderService.PlaceOrder(order);
+        }
+    }
+}

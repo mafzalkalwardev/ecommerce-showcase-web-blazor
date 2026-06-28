@@ -1,0 +1,57 @@
+﻿@page "/orders"
+@rendermode InteractiveAuto
+@using ECommerceShowcaseWeb.Models
+@using ECommerceShowcaseWeb.Services
+@inject OrderService OrderService
+
+<PageTitle>Orders</PageTitle>
+
+<NavMenu />
+
+<div class="container mt-5">
+    <h2>Order History</h2>
+    
+    @if (orders.Any())
+    {
+        <div class="table-responsive mt-4">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Items</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in orders)
+                    {
+                        <tr>
+                            <td>@order.Id</td>
+                            <td>@order.Customer?.Name</td>
+                            <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                            <td>$@order.TotalPrice</td>
+                            <td>@order.Items.Count</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mt-4">
+            No orders yet. Start shopping!
+        </div>
+    }
+</div>
+
+@code {
+    private List<Order> orders = new List<Order>();
+
+    protected override void OnInitialized()
+    {
+        orders = OrderService.GetAllOrders();
+    }
+}
